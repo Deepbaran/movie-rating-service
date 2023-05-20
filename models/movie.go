@@ -5,5 +5,5 @@ type Movie struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Genre       string `json:"genre"`
-	Rating      int    `json:'rating"`
+	Rating      int    `json:"rating"`
 }

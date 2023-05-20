@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	routers "github.com/Deepbaran/movie-rating-service/routers"
+	routers "github.com/Deepbaran/movie-rating-service/routes"
 )
 
 var DB *sql.DB
