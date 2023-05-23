@@ -6,14 +6,14 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/Deepbaran/movie-rating-service/controllers"
-	"github.com/Deepbaran/movie-rating-service/models"
+	"github.com/Deepbaran/movie-rating-service/configs"
 )
 
 func main() {
 	router := gin.Default()
 
 	// New DB Connection
-	models.ConnectDB()
+	configs.ConnectDB()
 
 	// API v1
 	v1 := router.Group("/api/v1")

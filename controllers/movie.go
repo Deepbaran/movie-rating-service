@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Deepbaran/movie-rating-service/configs"
 	"github.com/Deepbaran/movie-rating-service/models"
 	"github.com/gin-gonic/gin"
 )
@@ -40,12 +41,12 @@ func CreateMovie(c *gin.Context) {
 		Rating:      input.Rating,
 	}
 
-	if err := models.DB.Where("name=?", movie.Name).Find(&movie).Error; err != nil {
+	if err := configs.DB.Where("name=?", movie.Name).Find(&movie).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
 		return
 	}
 
-	if err := models.DB.Create(&movie).Error; err != nil {
+	if err := configs.DB.Create(&movie).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Record already exists!"})
 		return
 	}
@@ -55,7 +56,7 @@ func CreateMovie(c *gin.Context) {
 
 func GetMovies(c *gin.Context) {
 	var movies []models.Movie
-	if err := models.DB.First(&movies).Error; err != nil {
+	if err := configs.DB.First(&movies).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No records found!"})
 		return
 	}
@@ -66,7 +67,7 @@ func GetMovie(c *gin.Context) {
 	movie_id := c.Param("movie_id")
 	fmt.Println(movie_id)
 	var movie models.Movie
-	if err := models.DB.Where("movie_id=?", movie_id).First(&movie).Error; err != nil {
+	if err := configs.DB.Where("movie_id=?", movie_id).First(&movie).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
 		return
 	}
@@ -77,7 +78,7 @@ func GetMovie(c *gin.Context) {
 func UpdateMovie(c *gin.Context) {
 	movie_id := c.Param("movie_id")
 	var movie models.Movie
-	if err := models.DB.Where("movie_id=?", movie_id).First(&movie).Error; err != nil {
+	if err := configs.DB.Where("movie_id=?", movie_id).First(&movie).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
 		return
 	}
@@ -88,7 +89,7 @@ func UpdateMovie(c *gin.Context) {
 		return
 	}
 
-	if err := models.DB.Model(&movie).Update("rating", input.Rating).Error; err != nil {
+	if err := configs.DB.Model(&movie).Update("rating", input.Rating).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not created!"})
 		return
 	}
@@ -99,12 +100,12 @@ func UpdateMovie(c *gin.Context) {
 func DeleteMovie(c *gin.Context) {
 	movie_id := c.Param("movie_id")
 	var movie models.Movie
-	if err := models.DB.Where("movie_id=?", movie_id).First(&movie).Error; err != nil {
+	if err := configs.DB.Where("movie_id=?", movie_id).First(&movie).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
 		return
 	}
 
-	if err := models.DB.Delete(&movie).Error; err != nil {
+	if err := configs.DB.Delete(&movie).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not deleted!"})
 		return
 	}

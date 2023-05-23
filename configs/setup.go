@@ -1,6 +1,7 @@
-package models
+package configs
 
 import (
+	"github.com/Deepbaran/movie-rating-service/models"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
@@ -13,7 +14,7 @@ func ConnectDB() {
 		panic("Failed to connect with database")
 	}
 
-	err = db.AutoMigrate((&Movie{}))
+	err = db.AutoMigrate((&models.Movie{}))
 	if err != nil {
 		return
 	}
