@@ -1,6 +1,8 @@
 package configs
 
 import (
+	"os"
+
 	"github.com/Deepbaran/movie-rating-service/models"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
@@ -9,7 +11,7 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
-	db, err := gorm.Open(sqlite.Open("./movies.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(os.Getenv("DB_NAME")), &gorm.Config{})
 	if err != nil {
 		panic("Failed to connect with database")
 	}

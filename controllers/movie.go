@@ -1,18 +1,17 @@
 package controllers
 
 import (
-	"fmt"
+	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 
 	"github.com/Deepbaran/movie-rating-service/configs"
 	"github.com/Deepbaran/movie-rating-service/models"
-	"github.com/gin-gonic/gin"
 )
 
 // Schema for creating movies
 type CreateMovieInput struct {
-	MovieId     string `json:"movie_id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Genre       string `json:"genre"`
@@ -21,14 +20,28 @@ type CreateMovieInput struct {
 
 // Schema for updating movies
 type UpdateMovieInput struct {
-	Rating int `json:"rating"`
+	Description string `json:"description"`
+	Genre       string `json:"genre"`
+	Rating      int    `json:"rating"`
 }
 
-func CreateMovie(c *gin.Context) {
+// PUT
+// func CreateMovie(c *gin.Context) {
+func CreateMovie(w http.ResponseWriter, r *http.Request) {
+	// Get the request body
+	r.ParseForm()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, err.Error())
+		return
+	}
+
 	// Validate input
 	var input CreateMovieInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.Unmarshal([]byte(body), &input); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, err.Error())
 		return
 	}
 
@@ -41,74 +54,109 @@ func CreateMovie(c *gin.Context) {
 		Rating:      input.Rating,
 	}
 
-	if err := configs.DB.Where("name=?", movie.Name).Find(&movie).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
-		return
-	}
-
 	if err := configs.DB.Create(&movie).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record already exists!"})
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "Record already exists!")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": movie})
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	io.WriteString(w, movie.JsonMarshal())
 }
 
-func GetMovies(c *gin.Context) {
+// GET
+func GetMovies(w http.ResponseWriter, r *http.Request) {
 	var movies []models.Movie
 	if err := configs.DB.First(&movies).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No records found!"})
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "No records found!")
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": movies})
+
+	data := ""
+	for i := 0; i < len(movies); i++ {
+		data += movies[0].JsonMarshal()
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	io.WriteString(w, data)
 }
 
-func GetMovie(c *gin.Context) {
-	movie_id := c.Param("movie_id")
-	fmt.Println(movie_id)
+// GET
+func GetMovie(w http.ResponseWriter, r *http.Request, m string) {
 	var movie models.Movie
-	if err := configs.DB.Where("movie_id=?", movie_id).First(&movie).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+	if err := configs.DB.Where("movie_id=?", m).First(&movie).Error; err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "Record not found!")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": movie})
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	io.WriteString(w, movie.JsonMarshal())
 }
 
-func UpdateMovie(c *gin.Context) {
-	movie_id := c.Param("movie_id")
+// POST
+func UpdateMovie(w http.ResponseWriter, r *http.Request, m string) {
 	var movie models.Movie
-	if err := configs.DB.Where("movie_id=?", movie_id).First(&movie).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+	if err := configs.DB.Where("movie_id=?", m).First(&movie).Error; err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "Record not found!")
 		return
 	}
 
+	// Get the request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, err.Error())
+		return
+	}
+
+	// Validate input
 	var input UpdateMovieInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.Unmarshal([]byte(body), &input); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, err.Error())
 		return
 	}
 
-	if err := configs.DB.Model(&movie).Update("rating", input.Rating).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not created!"})
+	if len(input.Description) == 0 {
+		input.Description = movie.Description
+	}
+	if len(input.Genre) == 0 {
+		input.Genre = movie.Genre
+	}
+
+	if err := configs.DB.Model(&movie).Updates(input).Error; err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "Record not created!")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": movie})
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	io.WriteString(w, movie.JsonMarshal())
 }
 
-func DeleteMovie(c *gin.Context) {
-	movie_id := c.Param("movie_id")
+// DELETE
+func DeleteMovie(w http.ResponseWriter, r *http.Request, m string) {
 	var movie models.Movie
-	if err := configs.DB.Where("movie_id=?", movie_id).First(&movie).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not found!"})
+	if err := configs.DB.Where("movie_id=?", m).First(&movie).Error; err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "Record not found!")
 		return
 	}
 
 	if err := configs.DB.Delete(&movie).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Record not deleted!"})
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, "Record not deleted!")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "success", "data": movie})
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	io.WriteString(w, movie.JsonMarshal())
 }

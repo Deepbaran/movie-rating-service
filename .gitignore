@@ -13,3 +13,6 @@
 
 # SQLite DB File
 ./movies.db
+
+# Environment file
+.env
