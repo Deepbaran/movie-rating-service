@@ -21,3 +21,13 @@ func (movie *Movie) JsonMarshal() string {
 	}
 	return string(data)
 }
+
+// Insert
+
+// Get All Movies
+
+// Get a Specific Movie
+
+// Update a Movie
+
+// Delete a Movie
